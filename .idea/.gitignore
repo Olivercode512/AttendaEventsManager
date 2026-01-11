@@ -1,0 +1,30 @@
+# Archivos sensibles (claves, contraseñas, etc.)
+.env
+*.env
+secrets.toml
+
+# Cachés y temporales de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Carpetas de Streamlit (configuración local)
+.streamlit/
+
+# Archivos de editores/IDEs 
+.shelf/
+.workspace.xml
+.idea/           # PyCharm
+
+*.swp
+*.swo
+
+# Logs y temporales generales
+*.log
+*.tmp
+
+# Entornos virtuales (venv)
+venv/
+.env/
+.venv/
