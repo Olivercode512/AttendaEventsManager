@@ -1,9 +1,8 @@
 # app/main.py
 import streamlit as st
-from core.auth import login
-
 st.write("Llegué al inicio de main.py")
 st.balloons()
+from core.auth import login
 
 # Configuración de la página
 st.set_page_config(
