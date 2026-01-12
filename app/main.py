@@ -2,6 +2,9 @@
 import streamlit as st
 from core.auth import login
 
+st.write("Llegué al inicio de main.py")
+st.balloons()
+
 # Configuración de la página
 st.set_page_config(
     page_title="EventStaff Pro",
