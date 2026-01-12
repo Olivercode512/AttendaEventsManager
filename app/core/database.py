@@ -1,4 +1,4 @@
-from config.supabase import supabase
+from config.supabase_client import supabase
 
 def get_eventos():
     return supabase.table("eventos").select("*").order("fecha", desc=True).execute().data
