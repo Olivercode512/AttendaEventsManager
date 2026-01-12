@@ -2,8 +2,8 @@
 import streamlit as st
 from datetime import datetime
 from supabase import create_client
-from app.config.settings import Config
-from app.utils.whatsapp import crear_grupo_whatsapp
+from config.settings import Config
+from utils.whatsapp import crear_grupo_whatsapp
 
 supabase = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
 

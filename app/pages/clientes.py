@@ -1,7 +1,7 @@
 # pages/clientes.py
 import streamlit as st
 from supabase import create_client
-from app.config.settings import Config
+from config.settings import Config
 
 supabase = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
 

@@ -2,7 +2,7 @@
 import streamlit as st
 import re
 from supabase import create_client
-from app.config.settings import Config
+from config.settings import Config
 import urllib.parse
 
 supabase = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
