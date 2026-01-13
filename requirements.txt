@@ -1,3 +1,3 @@
 streamlit==1.41.1
-git+https://github.com/supabase/supabase-py.git
+supabase-py==2.6.0
 python-dotenv
