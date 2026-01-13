@@ -1,3 +1,5 @@
 streamlit==1.41.1
 supabase
 python-dotenv
+nicegui
+bcrypt

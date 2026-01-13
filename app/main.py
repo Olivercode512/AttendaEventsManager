@@ -1,85 +1,81 @@
-# app/main.py
-import streamlit as st
-st.write("Llegué al inicio de main.py")
-st.balloons()
-from core.auth import login
+# main.py - Adaptado a NiceGUI (login centrado, sidebar, dashboard)
+from nicegui import ui, app
+from core.auth import login  # Mantenemos tu función original
 
-# Configuración de la página
-st.set_page_config(
-    page_title="EventStaff Pro",
-    page_icon="https://i.imgur.com/8e8Q8nB.png",
-    layout="centered"  # Cambiado a "centered" para mejor alineación del login
-)
+# Configuración de la página (equivalente a st.set_page_config)
+ui.context.client.request.headers['title'] = "EventStaff Pro"
+ui.context.client.request.headers['icon'] = "https://i.imgur.com/8e8Q8nB.png"
 
 # ===================== LOGO SEGURO =====================
 def mostrar_logo(ancho=280):
     try:
-        st.image("assets/logo.png", width=ancho, use_container_width=False)
+        ui.image("assets/logo.png").style(f'width: {ancho}px; margin: auto;')
     except:
         # Logo VIP online (siempre funciona)
-        st.image("https://i.imgur.com/8e8Q8nB.png", width=ancho, use_container_width=False)
+        ui.image("https://i.imgur.com/8e8Q8nB.png").style(f'width: {ancho}px; margin: auto;')
 
 # ===================== LOGIN PERFECTAMENTE CENTRADO =====================
-if "user" not in st.session_state:
-    # Espacio superior para bajar un poco el contenido
-    st.markdown("<div style='margin-top: 5rem;'></div>", unsafe_allow_html=True)
+@ui.page('/')
+def login_page():
+    # Espacio superior para bajar un poco el contenido (equivalente a markdown margin)
+    ui.label().style('margin-top: 5rem;')
 
     # Todo centrado horizontalmente
-    with st.container():
+    with ui.card().classes('w-1/2 mx-auto p-8 shadow-xl rounded-lg'):
         # Logo centrado
-        col_logo = st.columns([1, 2, 1])[1]  # Columna central
-        with col_logo:
-            mostrar_logo(280)
+        mostrar_logo(280)
 
         # Título centrado
-        st.markdown("<h1 style='text-align: center; margin-top: 20px;'>EventStaff Pro</h1>", unsafe_allow_html=True)
-        st.markdown("<h3 style='text-align: center; color: #666;'>Panel de Coordinador</h3>", unsafe_allow_html=True)
-
-        # Espacio
-        st.markdown("<div style='margin: 40px 0;'></div>", unsafe_allow_html=True)
+        ui.label("EventStaff Pro").classes('text-4xl text-center mt-5')
+        ui.label("Panel de Coordinador").classes('text-xl text-center text-gray-600')
 
         # Formulario centrado
-        with st.form("login_form", clear_on_submit=False):
-            # Campos centrados
-            email = st.text_input("Email", value="admin@eventstaff.pro", placeholder="admin@eventstaff.pro")
-            pwd = st.text_input("Contraseña", type="password", value="1234", placeholder="Contraseña")
+        email = ui.input('Email', placeholder="admin@eventstaff.pro").classes('w-full mt-6')
+        pwd = ui.input('Contraseña', password=True, placeholder="Contraseña").classes('w-full mt-4')
 
-            # Botón centrado y ancho completo
-            st.markdown("<div style='margin-top: 30px;'></div>", unsafe_allow_html=True)
-            if st.form_submit_button("Entrar", type="primary", use_container_width=True):
-                user = login(email, pwd)
-                if user:
-                    st.session_state.user = user
-                    st.success("¡Acceso correcto!")
-                    st.rerun()
-                else:
-                    st.error("Email o contraseña incorrectos")
+        def try_login():
+            user = login(email.value, pwd.value)
+            if user:
+                app.storage.user['user'] = user
+                ui.notify('¡Acceso correcto!', type='positive')
+                ui.navigate.to('/dashboard')
+            else:
+                ui.notify('Email o contraseña incorrectos', type='negative')
 
-    st.stop()
+        ui.button('Entrar', on_click=try_login).props('color=primary').classes('w-full mt-6')
 
-# ===================== SIDEBAR =====================
-with st.sidebar:
-    mostrar_logo(180)
-    st.write(f"**{st.session_state.user.get('nombre', 'Coordinador')}**")
-    st.divider()
+# ===================== DASHBOARD CON SIDEBAR =====================
+@ui.page('/dashboard')
+def dashboard_page():
+    if 'user' not in app.storage.user:
+        ui.navigate.to('/')
 
-    st.page_link("pages/clientes.py", label="Clientes", icon="📊")
-    st.page_link("pages/eventos.py", label="Eventos", icon="📅")
-    st.page_link("pages/camareros.py", label="Camareros", icon="👥")
-    st.page_link("pages/refuerzo.py", label="Refuerzo Urgente", icon="📞")
+    # Contenido principal
+    ui.label("Bienvenido a EventStaff Pro").classes('text-3xl mt-8')
 
-    st.divider()
-    if st.button("Cerrar sesión", use_container_width=True):
-        del st.session_state.user
-        st.rerun()
+    ui.success("Has iniciado sesión correctamente").classes('mt-4')
 
-# ===================== CONTENIDO PRINCIPAL =====================
-st.title("Bienvenido a EventStaff Pro")
-st.success("Has iniciado sesión correctamente")
-st.markdown("""
+    ui.markdown("""
 Selecciona una opción del menú lateral para empezar a gestionar:
 - Crear eventos
 - Asignar camareros
 - Generar grupos de WhatsApp automáticos
 - Buscar refuerzos urgentes
-""")
+""").classes('mt-4')
+
+    # Sidebar (left drawer)
+    with ui.left_drawer(value=True).classes('bg-gray-100 p-4'):
+        mostrar_logo(180)
+        ui.label(f"**{app.storage.user['user'].get('nombre', 'Coordinador')}**").classes('text-lg font-bold')
+        ui.separator()
+
+        ui.button('Clientes', on_click=lambda: ui.navigate.to('/clientes')).props('flat').classes('w-full text-left')
+        ui.button('Eventos', on_click=lambda: ui.navigate.to('/eventos')).props('flat').classes('w-full text-left')
+        ui.button('Camareros', on_click=lambda: ui.navigate.to('/camareros')).props('flat').classes('w-full text-left')
+        ui.button('Refuerzo Urgente', on_click=lambda: ui.navigate.to('/refuerzo')).props('flat').classes('w-full text-left')
+
+        ui.separator()
+        ui.button('Cerrar sesión', on_click=lambda: [app.storage.user.clear(), ui.navigate.to('/')]).props('flat color=negative').classes('w-full text-left')
+
+# Ejecutar la app
+ui.run(title="EventStaff Pro", port=8080, reload=True)  # Para local, cambiar port a $PORT en Render
