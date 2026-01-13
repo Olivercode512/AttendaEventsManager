@@ -1,4 +1,4 @@
-# pages/camareros.py - Versión corregida (KeyError 'observaciones' solucionado)
+# pages/camareros.py
 import streamlit as st
 import re
 from supabase import create_client
@@ -54,78 +54,99 @@ with st.expander("Añadir nuevo camarero", expanded=True):
                 }
                 supabase.table("camareros").insert(datos).execute()
                 st.success("¡Camarero añadido!")
+                st.balloons()
                 st.rerun()
 
 # ================== LISTA DE CAMAREROS ==================
 camareros = supabase.table("camareros").select("*").execute().data
 
 if camareros:
-    st.subheader("Lista de camareros")
     for c in camareros:
         with st.expander(f"{c['nombre']} {c['apellidos']} - Tel: {c['telefono']}"):
-            col1, col2 = st.columns(2)
-            with col1:
-                st.write(f"Email: {c.get('email', 'No disponible')}")
-                st.write(f"DNI: {c.get('dni', 'No disponible')}")
-                st.write(f"Residencia: {c.get('residencia', 'No disponible')}")
-                st.write(f"Nacionalidad: {c.get('nacionalidad', 'No disponible')}")
-                st.write(f"Idiomas: {c.get('idiomas', 'No disponible')}")
-            with col2:
-                st.write(f"Tiene coche: {'Sí' if c.get('tiene_coche') else 'No'}")
-                st.write(f"Curso PRL: {'Sí' if c.get('curso_prl') else 'No'}")
-                st.write(f"Nº SS: {c.get('numero_ss', 'No disponible')}")
-                st.write(f"Tarifa: {c.get('tarifa', 12.0)} €/h")
-                st.write(f"Observaciones: {c.get('observaciones') or 'Ninguna'}")  # ← CORRECCIÓN AQUÍ
+            tab1, tab2 = st.tabs(["Detalles", "Valoración"])
 
-            # Editar camarero (el resto igual)
-            with st.form(f"edit_{c['id']}"):
-                st.subheader("Editar camarero")
+            with tab1:
                 col1, col2 = st.columns(2)
                 with col1:
-                    edit_nombre = st.text_input("Nombre", value=c.get('nombre', ''), key=f"nom_{c['id']}")
-                    edit_apellidos = st.text_input("Apellidos", value=c.get('apellidos', ''), key=f"ape_{c['id']}")
-                    edit_telefono = st.text_input("Teléfono", value=c.get('telefono', ''), key=f"tel_{c['id']}")
-                    edit_email = st.text_input("Email", value=c.get('email', ''), key=f"email_{c['id']}")
-                    edit_dni = st.text_input("DNI", value=c.get('dni', ''), key=f"dni_{c['id']}")
+                    st.write(f"Email: {c.get('email', 'No disponible')}")
+                    st.write(f"DNI: {c.get('dni', 'No disponible')}")
+                    st.write(f"Residencia: {c.get('residencia', 'No disponible')}")
+                    st.write(f"Nacionalidad: {c.get('nacionalidad', 'No disponible')}")
+                    st.write(f"Idiomas: {c.get('idiomas', 'No disponible')}")
                 with col2:
-                    edit_residencia = st.text_input("Residencia", value=c.get('residencia', ''), key=f"res_{c['id']}")
-                    edit_nacionalidad = st.text_input("Nacionalidad", value=c.get('nacionalidad', ''), key=f"nac_{c['id']}")
-                    edit_idiomas = st.text_input("Idiomas", value=c.get('idiomas', ''), key=f"idi_{c['id']}")
-                    edit_coche = st.checkbox("Tiene coche", value=c.get('tiene_coche', False), key=f"coche_{c['id']}")
-                    edit_prl = st.checkbox("Curso PRL", value=c.get('curso_prl', False), key=f"prl_{c['id']}")
+                    st.write(f"Tiene coche: {'Sí' if c.get('tiene_coche') else 'No'}")
+                    st.write(f"Curso PRL: {'Sí' if c.get('curso_prl') else 'No'}")
+                    st.write(f"Nº SS: {c.get('numero_ss', 'No disponible')}")
+                    st.write(f"Tarifa: {c.get('tarifa', 12.0)} €/h")
+                    st.write(f"Observaciones: {c.get('observaciones') or 'Ninguna'}")
 
-                col3, col4 = st.columns(2)
-                with col3:
-                    edit_ss = st.text_input("Nº SS", value=c.get('numero_ss', ''), key=f"ss_{c['id']}")
-                    edit_tarifa = st.number_input("Tarifa €/h", value=c.get('tarifa', 12.0), step=0.1, key=f"tar_{c['id']}")
-                with col4:
-                    edit_obs = st.text_area("Observaciones", value=c.get('observaciones', ''), height=100, key=f"obs_{c['id']}")
+                # Editar camarero (mismo código original)
+                with st.form(f"edit_{c['id']}"):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        edit_nombre = st.text_input("Nombre", value=c.get('nombre', ''), key=f"nom_{c['id']}")
+                        edit_apellidos = st.text_input("Apellidos", value=c.get('apellidos', ''), key=f"ape_{c['id']}")
+                        edit_telefono = st.text_input("Teléfono", value=c.get('telefono', ''), key=f"tel_{c['id']}")
+                        edit_email = st.text_input("Email", value=c.get('email', ''), key=f"email_{c['id']}")
+                        edit_dni = st.text_input("DNI", value=c.get('dni', ''), key=f"dni_{c['id']}")
+                    with col2:
+                        edit_residencia = st.text_input("Residencia", value=c.get('residencia', ''), key=f"res_{c['id']}")
+                        edit_nacionalidad = st.text_input("Nacionalidad", value=c.get('nacionalidad', ''), key=f"nac_{c['id']}")
+                        edit_idiomas = st.text_input("Idiomas", value=c.get('idiomas', ''), key=f"idi_{c['id']}")
+                        edit_coche = st.checkbox("Tiene coche", value=c.get('tiene_coche', False), key=f"coche_{c['id']}")
+                        edit_prl = st.checkbox("Curso PRL", value=c.get('curso_prl', False), key=f"prl_{c['id']}")
 
-                col_edit, col_del = st.columns(2)
-                with col_edit:
-                    if st.form_submit_button("Guardar cambios", type="primary"):
-                        datos_edit = {
-                            "nombre": edit_nombre.strip(),
-                            "apellidos": edit_apellidos.strip(),
-                            "telefono": edit_telefono.strip(),
-                            "email": edit_email.strip(),
-                            "dni": edit_dni.strip(),
-                            "residencia": edit_residencia.strip(),
-                            "nacionalidad": edit_nacionalidad.strip(),
-                            "idiomas": edit_idiomas.strip(),
-                            "tiene_coche": edit_coche,
-                            "curso_prl": edit_prl,
-                            "numero_ss": edit_ss.strip(),
-                            "tarifa": edit_tarifa,
-                            "observaciones": edit_obs.strip() if edit_obs.strip() else None
+                    col3, col4 = st.columns(2)
+                    with col3:
+                        edit_ss = st.text_input("Nº SS", value=c.get('numero_ss', ''), key=f"ss_{c['id']}")
+                        edit_tarifa = st.number_input("Tarifa €/h", value=c.get('tarifa', 12.0), step=0.1, key=f"tar_{c['id']}")
+                    with col4:
+                        edit_obs = st.text_area("Observaciones", value=c.get('observaciones', ''), height=100, key=f"obs_{c['id']}")
+
+                    col_edit, col_del = st.columns(2)
+                    with col_edit:
+                        if st.form_submit_button("Guardar cambios", type="primary"):
+                            datos_edit = {
+                                "nombre": edit_nombre.strip(),
+                                "apellidos": edit_apellidos.strip(),
+                                "telefono": edit_telefono.strip(),
+                                "email": edit_email.strip(),
+                                "dni": edit_dni.strip(),
+                                "residencia": edit_residencia.strip(),
+                                "nacionalidad": edit_nacionalidad.strip(),
+                                "idiomas": edit_idiomas.strip(),
+                                "tiene_coche": edit_coche,
+                                "curso_prl": edit_prl,
+                                "numero_ss": edit_ss.strip(),
+                                "tarifa": edit_tarifa,
+                                "observaciones": edit_obs.strip() if edit_obs.strip() else None
+                            }
+                            supabase.table("camareros").update(datos_edit).eq("id", c['id']).execute()
+                            st.success("Camarero actualizado")
+                            st.rerun()
+                    with col_del:
+                        if st.form_submit_button("Eliminar", type="secondary"):
+                            st.session_state.camarero_a_eliminar = c['id']
+                            st.session_state.nombre_a_eliminar = f"{c['nombre']} {c['apellidos']}"
+                            st.rerun()
+
+            with tab2:
+                # Añadir valoración (mismo código original, ahora en tab)
+                with st.form(f"valoracion_{c['id']}"):
+                    valoracion = st.number_input("Valoración (0-5)", min_value=0, max_value=5, step=1, key=f"val_{c['id']}")
+                    comentario = st.text_area("Comentario", key=f"com_{c['id']}")
+                    evento_id = st.number_input("ID del evento", min_value=0, key=f"ev_{c['id']}")
+
+                    if st.form_submit_button("Guardar valoración"):
+                        datos_val = {
+                            "camarero_id": c['id'],
+                            "evento_id": evento_id,
+                            "valoracion": valoracion,
+                            "comentario": comentario.strip() if comentario.strip() else None
                         }
-                        supabase.table("camareros").update(datos_edit).eq("id", c['id']).execute()
-                        st.success("Camarero actualizado")
-                        st.rerun()
-                with col_del:
-                    if st.form_submit_button("Eliminar", type="secondary"):
-                        st.session_state.camarero_a_eliminar = c['id']
-                        st.session_state.nombre_a_eliminar = f"{c['nombre']} {c['apellidos']}"
+                        supabase.table("valoraciones").insert(datos_val).execute()
+                        st.success("¡Valoración guardada!")
+                        st.balloons()
                         st.rerun()
 
 # ================== CONFIRMACIÓN ELIMINAR ==================
