@@ -1,5 +1,5 @@
 # app/core/auth.py - Adaptado a NiceGUI (sin Streamlit, usa app.storage.user)
-from app.config.supabase_client import supabase  # Mantenemos tu cliente de Supabase
+from config.supabase_client import supabase  # Mantenemos tu cliente de Supabase
 from nicegui import ui, app
 
 def login(email: str, password: str):

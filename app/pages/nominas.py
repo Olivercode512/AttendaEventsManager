@@ -1,7 +1,7 @@
 # pages/nominas.py - Adaptado a NiceGUI (con selector de mes y tabla dinámica)
 from nicegui import ui, app
 from datetime import datetime
-from app.config.supabase_client import supabase
+from config.supabase_client import supabase
 from app.core.auth import require_auth  # Para autenticación
 
 @ui.page('/nominas')

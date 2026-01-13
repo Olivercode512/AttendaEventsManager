@@ -1,5 +1,5 @@
 # app/database.py - Adaptado a NiceGUI (sin cambios en lógica, solo import)
-from app.config.supabase_client import supabase  # Mantenemos tu cliente de Supabase
+from config.supabase_client import supabase  # Mantenemos tu cliente de Supabase
 
 def get_eventos():
     """Obtiene todos los eventos ordenados por fecha descendente"""

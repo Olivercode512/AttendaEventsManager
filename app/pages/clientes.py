@@ -1,7 +1,7 @@
 # pages/clientes.py - Adaptado a NiceGUI (con expansions anidadas permitidas)
 from nicegui import ui, app
-from app.config.supabase_client import supabase
-from app.config.settings import Config
+from config.supabase_client import supabase
+from config.settings import Config
 from app.core.auth import require_auth  # Importamos para autenticación
 
 @ui.page('/clientes')

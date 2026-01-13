@@ -1,8 +1,8 @@
 # pages/camareros.py - Adaptado a NiceGUI (con anidamiento de expansions permitido)
 from nicegui import ui, app
 import re
-from app.config.supabase_client import supabase
-from app.config.settings import Config
+from config.supabase_client import supabase
+from config.settings import Config
 import urllib.parse
 from app.core.auth import require_auth  # Importamos para autenticación
 
