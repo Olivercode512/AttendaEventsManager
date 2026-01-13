@@ -1,4 +1,4 @@
-# pages/camareros.py - Versión corregida (sin expander anidado, usa tabs)
+# pages/camareros.py - Versión corregida (sin expander anidado, usa subheader para valoración)
 import streamlit as st
 import re
 from supabase import create_client
@@ -56,7 +56,7 @@ with st.expander("Añadir nuevo camarero", expanded=True):
                 st.success("¡Camarero añadido!")
                 st.rerun()
 
-# ================== LISTA DE CAMAREROS + EDICIÓN ==================
+# ================== LISTA DE CAMAREROS ==================
 camareros = supabase.table("camareros").select("*").execute().data
 
 if camareros:
@@ -127,6 +127,25 @@ if camareros:
                         st.session_state.camarero_a_eliminar = c['id']
                         st.session_state.nombre_a_eliminar = f"{c['nombre']} {c['apellidos']}"
                         st.rerun()
+
+            # Añadir valoración (fuera del expander, con subheader en lugar de expander anidado)
+            st.subheader("Añadir valoración")
+            with st.form(f"valoracion_{c['id']}"):
+                valoracion = st.number_input("Valoración (0-5)", min_value=0, max_value=5, step=1, key=f"val_{c['id']}")
+                comentario = st.text_area("Comentario", key=f"com_{c['id']}")
+                evento_id = st.number_input("ID del evento", min_value=0, key=f"ev_{c['id']}")
+
+                if st.form_submit_button("Guardar valoración"):
+                    datos_val = {
+                        "camarero_id": c['id'],
+                        "evento_id": evento_id,
+                        "valoracion": valoracion,
+                        "comentario": comentario.strip() if comentario.strip() else None
+                    }
+                    supabase.table("valoraciones").insert(datos_val).execute()
+                    st.success("¡Valoración guardada!")
+                    st.balloons()
+                    st.rerun()
 
 # ================== CONFIRMACIÓN ELIMINAR ==================
 if st.session_state.get("camarero_a_eliminar"):
