@@ -5,8 +5,8 @@ from components.header import render_header
 from components.header import render_header
 
 # Configuración de la página (equivalente a st.set_page_config)
-ui.context.client.request.headers['title'] = "EventStaff Pro"
-ui.context.client.request.headers['icon'] = "https://i.imgur.com/8e8Q8nB.png"
+# ui.context.client.request.headers['title'] = "EventStaff Pro"
+# ui.context.client.request.headers['icon'] = "https://i.imgur.com/8e8Q8nB.png" 
 
 # ===================== LOGO SEGURO =====================
 def mostrar_logo(ancho=280):
@@ -80,4 +80,9 @@ Selecciona una opción del menú lateral para empezar a gestionar:
         ui.button('Cerrar sesión', on_click=lambda: [app.storage.user.clear(), ui.navigate.to('/')]).props('flat color=negative').classes('w-full text-left')
 
 # Ejecutar la app
-ui.run(title="EventStaff Pro", port=8080, reload=True)  # Para local, cambiar port a $PORT en Render
+ui.run(
+    title="EventStaff Pro",
+    favicon="https://i.imgur.com/8e8Q8nB.png",
+    port=8080,  # Para local, Render ignora y usa $PORT
+    reload=True  # Solo local
+)
