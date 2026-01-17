@@ -34,10 +34,12 @@ def render_header(show_logout=True, title="EventStaff Pro"):
                     ui.button('Cerrar sesión', on_click=handle_logout, icon='logout') \
                         .props('flat color=white').classes('text-white hover:bg-white/20')
 
-            # Botón de menú móvil (para pantallas pequeñas, opcional)
-            ui.button(icon='menu', on_click=lambda: app.storage.general['drawer_open'] = not app.storage.general.get(
-                'drawer_open', False)) \
-                    .props('flat color=white').classes('lg:hidden')
+            # Botón de menú móvil (para pantallas pequeñas)
+            def toggle_drawer():
+                app.storage.general['drawer_open'] = not app.storage.general.get('drawer_open', False)
+
+            ui.button(icon='menu', on_click=toggle_drawer) \
+                .props('flat color=white').classes('lg:hidden')
 
     # Drawer lateral para móvil (si lo usas)
     with ui.left_drawer(value=False).bind_value(app.storage.general, 'drawer_open').classes('bg-gray-800 text-white'):
