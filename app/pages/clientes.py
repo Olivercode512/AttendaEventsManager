@@ -2,7 +2,7 @@
 from nicegui import ui, app
 from config.supabase_client import supabase
 from config.settings import Config
-from app.core.auth import require_auth  # Importamos para autenticación
+from core.auth import require_auth  # Importamos para autenticación
 
 @ui.page('/clientes')
 def clientes_page():

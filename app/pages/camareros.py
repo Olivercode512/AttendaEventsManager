@@ -4,7 +4,7 @@ import re
 from config.supabase_client import supabase
 from config.settings import Config
 import urllib.parse
-from app.core.auth import require_auth  # Importamos para autenticación
+from core.auth import require_auth  # Importamos para autenticación
 
 @ui.page('/camareros')
 def camareros_page():

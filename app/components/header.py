@@ -1,6 +1,6 @@
 # app/components/header.py - Componente reutilizable para el header (barra superior) en NiceGUI
 from nicegui import ui, app
-from app.core.auth import require_auth, logout
+from core.auth import require_auth, logout
 
 
 def render_header(show_logout=True, title="EventStaff Pro"):

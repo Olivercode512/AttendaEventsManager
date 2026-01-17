@@ -1,8 +1,8 @@
 # main.py - Adaptado a NiceGUI (login centrado, sidebar, dashboard)
 from nicegui import ui, app
 from core.auth import login  # Mantenemos tu función original
-from app.components.header import render_header
-from app.components.header import render_header
+from components.header import render_header
+from components.header import render_header
 
 # Configuración de la página (equivalente a st.set_page_config)
 ui.context.client.request.headers['title'] = "EventStaff Pro"

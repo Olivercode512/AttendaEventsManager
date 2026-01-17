@@ -2,9 +2,9 @@
 from nicegui import ui, app
 from datetime import datetime
 from config.supabase_client import supabase
-from app.utils.whatsapp import crear_grupo_whatsapp
-from app.core.auth import require_auth
-from app.components.header import render_header  # Si tienes el header
+from utils.whatsapp import crear_grupo_whatsapp
+from core.auth import require_auth
+from components.header import render_header  # Si tienes el header
 
 @ui.page('/eventos')
 def eventos_page():
