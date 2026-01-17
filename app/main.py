@@ -6,7 +6,7 @@ from components.header import render_header
 
 # Configuración de la página (equivalente a st.set_page_config)
 # ui.context.client.request.headers['title'] = "EventStaff Pro"
-# ui.context.client.request.headers['icon'] = "https://i.imgur.com/8e8Q8nB.png" 
+# ui.context.client.request.headers['icon'] = "https://i.imgur.com/8e8Q8nB.png"
 
 # ===================== LOGO SEGURO =====================
 def mostrar_logo(ancho=280):
@@ -83,6 +83,7 @@ Selecciona una opción del menú lateral para empezar a gestionar:
 ui.run(
     title="EventStaff Pro",
     favicon="https://i.imgur.com/8e8Q8nB.png",
-    port=8080,  # Para local, Render ignora y usa $PORT
-    reload=True  # Solo local
+    port=8080,           # Para local; Render usa $PORT automáticamente
+    reload=True,         # Solo para desarrollo local
+    storage_secret="tu_clave_secreta_super_segura_1234567890"  # ← Añade ESTA línea
 )
