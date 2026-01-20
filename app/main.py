@@ -55,7 +55,7 @@ def dashboard_page():
     # Contenido principal
     ui.label("Bienvenido a EventStaff Pro").classes('text-3xl mt-8')
 
-    ui.success("Has iniciado sesión correctamente").classes('mt-4')
+    ui.success("Has iniciado sesión correctamente",type='positive').classes('mt-4')
 
     ui.markdown("""
 Selecciona una opción del menú lateral para empezar a gestionar:
