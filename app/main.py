@@ -1,4 +1,4 @@
-# main.py - Versión corregida FINAL: UI 100% dentro de @ui.page → soluciona RuntimeError
+# main.py - CORREGIDO: TODO el UI dentro de @ui.page → soluciona RuntimeError
 from nicegui import ui, app
 from core.auth import login, require_auth, logout
 from components.header import render_header
@@ -6,17 +6,17 @@ from pages.camareros import *
 from pages.clientes import *
 from pages.eventos import *
 
-# ===================== LOGO SEGURO (auxiliar) =====================
+# ===================== FUNCIÓN AUXILIAR (sin UI global) =====================
 def mostrar_logo(ancho=280):
     try:
         ui.image("assets/logo.png").style(f'width: {ancho}px; margin: auto;')
     except:
         ui.image("https://i.imgur.com/8e8Q8nB.png").style(f'width: {ancho}px; margin: auto;')
 
-# ===================== LOGIN =====================
+# ===================== LOGIN (todo el UI aquí) =====================
 @ui.page('/')
 def login_page():
-    print("[DEBUG] Cargando página de login")
+    print("[DEBUG LOGIN] Cargando página de login")
 
     ui.label('EventStaff Pro').classes('text-5xl text-center mt-16')
     ui.label('Panel de Coordinador').classes('text-2xl text-center text-gray-600 mt-4')
@@ -26,34 +26,26 @@ def login_page():
         password = ui.input('Contraseña', password=True, placeholder='Contraseña').classes('w-full mt-4')
 
         def try_login():
-            print("\n" + "="*60)
-            print("[DEBUG TRY_LOGIN] INICIO DE INTENTO")
+            print("[DEBUG TRY_LOGIN] Inicio intento")
             print(f"Email: '{email.value}'")
-            print(f"Contraseña (longitud {len(password.value)}): '{password.value}'")
+            print(f"Contraseña: '{password.value}' (longitud {len(password.value)})")
 
             user = login(email.value, password.value)
-
-            print(f"Resultado login(): {user}")
-            print("="*60 + "\n")
+            print(f"Resultado login: {user}")
 
             if user:
-                print("[DEBUG] Login OK → guardando en storage")
                 app.storage.user['user'] = user
                 ui.notify('¡Acceso correcto!', type='positive')
                 ui.navigate.to('/dashboard')
             else:
-                print("[DEBUG] Login FALLIDO")
                 ui.notify('Email o contraseña incorrectos', type='negative')
 
         ui.button('Entrar', on_click=try_login).props('flat color=primary').classes('w-full mt-6')
 
-# ===================== DASHBOARD =====================
+# ===================== DASHBOARD (todo el UI aquí) =====================
 @ui.page('/dashboard')
 def dashboard_page():
-    print("\n" + "="*60)
     print("[DEBUG DASHBOARD] Entrando...")
-    print(f"Storage.user actual: {app.storage.user}")
-    print("="*60 + "\n")
 
     if not require_auth():
         return
@@ -94,5 +86,5 @@ ui.run(
     favicon="https://i.imgur.com/8e8Q8nB.png",
     port=8080,
     reload=True,
-    storage_secret="mi_super_secreto_attenda_2026_oliver_xai_grok_987654"  # ¡Cámbialo por el tuyo!
+    storage_secret="mi_super_secreto_attenda_2026_oliver_xai_grok_987654"  # CAMBIA ESTO POR TU CLAVE REAL
 )
