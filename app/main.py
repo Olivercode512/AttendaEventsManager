@@ -1,4 +1,4 @@
-# main.py - Versión corregida: TODO el UI dentro de @ui.page (soluciona RuntimeError y permite múltiples páginas)
+# main.py - Versión corregida FINAL: UI 100% dentro de @ui.page → soluciona RuntimeError
 from nicegui import ui, app
 from core.auth import login, require_auth, logout
 from components.header import render_header
@@ -6,14 +6,14 @@ from pages.camareros import *
 from pages.clientes import *
 from pages.eventos import *
 
-# ===================== LOGO SEGURO (función auxiliar, sin UI global) =====================
+# ===================== LOGO SEGURO (auxiliar) =====================
 def mostrar_logo(ancho=280):
     try:
         ui.image("assets/logo.png").style(f'width: {ancho}px; margin: auto;')
     except:
         ui.image("https://i.imgur.com/8e8Q8nB.png").style(f'width: {ancho}px; margin: auto;')
 
-# ===================== PÁGINA DE LOGIN =====================
+# ===================== LOGIN =====================
 @ui.page('/')
 def login_page():
     print("[DEBUG] Cargando página de login")
@@ -27,23 +27,22 @@ def login_page():
 
         def try_login():
             print("\n" + "="*60)
-            print("[DEBUG TRY_LOGIN] INICIO DE INTENTO DE LOGIN")
-            print(f"Email ingresado: '{email.value}'")
-            print(f"Contraseña ingresada (longitud {len(password.value)}): '{password.value}'")
+            print("[DEBUG TRY_LOGIN] INICIO DE INTENTO")
+            print(f"Email: '{email.value}'")
+            print(f"Contraseña (longitud {len(password.value)}): '{password.value}'")
 
             user = login(email.value, password.value)
 
-            print(f"Resultado de login(): {user}")
+            print(f"Resultado login(): {user}")
             print("="*60 + "\n")
 
             if user:
-                print("[DEBUG TRY_LOGIN] LOGIN EXITOSO → Guardando usuario en storage")
-                print(f"Datos guardados: {user}")
+                print("[DEBUG] Login OK → guardando en storage")
                 app.storage.user['user'] = user
                 ui.notify('¡Acceso correcto!', type='positive')
                 ui.navigate.to('/dashboard')
             else:
-                print("[DEBUG TRY_LOGIN] LOGIN FALLIDO → No se guardó nada")
+                print("[DEBUG] Login FALLIDO")
                 ui.notify('Email o contraseña incorrectos', type='negative')
 
         ui.button('Entrar', on_click=try_login).props('flat color=primary').classes('w-full mt-6')
@@ -52,39 +51,30 @@ def login_page():
 @ui.page('/dashboard')
 def dashboard_page():
     print("\n" + "="*60)
-    print("[DEBUG DASHBOARD] Entrando a dashboard_page")
-    print(f"Contenido actual de app.storage.user: {app.storage.user}")
+    print("[DEBUG DASHBOARD] Entrando...")
+    print(f"Storage.user actual: {app.storage.user}")
     print("="*60 + "\n")
 
     if not require_auth():
-        print("[DEBUG DASHBOARD] require_auth → FALSE (redirigiendo a login)")
         return
-
-    print("[DEBUG DASHBOARD] require_auth → TRUE (acceso permitido)")
 
     render_header(title="Dashboard")
 
     ui.notify("Has iniciado sesión correctamente", type='positive')
 
-    # Mostrar nombre con manejo de error para evitar KeyError
     try:
-        user_name = app.storage.user['user'].get('nombre', 'Coordinador')
-        print(f"[DEBUG DASHBOARD] Nombre del usuario: {user_name}")
-        ui.label(f"**Bienvenido, {user_name}**").classes('text-3xl mt-8')
-    except KeyError as e:
-        print(f"[ERROR DASHBOARD] KeyError al acceder a storage.user['user']: {e}")
-        ui.notify("Error: no se encontró el usuario en la sesión", type='negative')
+        nombre = app.storage.user['user'].get('nombre', 'Coordinador')
+        ui.label(f"**Bienvenido, {nombre}**").classes('text-3xl mt-8')
+    except KeyError:
         ui.label("Bienvenido (error al cargar nombre)").classes('text-3xl mt-8 text-red-500')
 
-    ui.label("Selecciona una opción del menú lateral para empezar a gestionar").classes('text-lg mt-4')
+    ui.label("Selecciona una opción del menú lateral").classes('text-lg mt-4')
 
-    # Sidebar (drawer izquierdo) - mantengo exactamente tu estructura
     with ui.left_drawer(value=True).classes('bg-gray-100 p-4'):
         mostrar_logo(180)
-        # Manejo de error para el nombre en sidebar
         try:
-            user_name = app.storage.user['user'].get('nombre', 'Coordinador')
-            ui.label(f"**{user_name}**").classes('text-lg font-bold')
+            nombre = app.storage.user['user'].get('nombre', 'Coordinador')
+            ui.label(f"**{nombre}**").classes('text-lg font-bold')
         except KeyError:
             ui.label("**Coordinador**").classes('text-lg font-bold')
 
@@ -98,12 +88,11 @@ def dashboard_page():
         ui.separator()
         ui.button('Cerrar sesión', on_click=lambda: [app.storage.user.clear(), ui.navigate.to('/')]).props('flat color=negative').classes('w-full text-left')
 
-# ===================== EJECUCIÓN DE LA APP =====================
-# ¡Nada de UI fuera de las funciones @ui.page!
+# ===================== EJECUCIÓN =====================
 ui.run(
     title="EventStaff Pro",
     favicon="https://i.imgur.com/8e8Q8nB.png",
-    port=8080,           # Para local; Render usa $PORT automáticamente
-    reload=True,         # Solo para desarrollo local
-    storage_secret="mi_super_secreto_attenda_2026_oliver_xai_grok_987654"  # ¡OBLIGATORIO! Cámbiala por una tuya
+    port=8080,
+    reload=True,
+    storage_secret="mi_super_secreto_attenda_2026_oliver_xai_grok_987654"  # ¡Cámbialo por el tuyo!
 )
