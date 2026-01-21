@@ -2,6 +2,9 @@
 from nicegui import ui, app
 from core.auth import login, require_auth, logout
 from components.header import render_header  # Solo una vez
+from pages.camareros import *
+from pages.clientes import *
+from pages.eventos import *
 
 # ===================== LOGO SEGURO =====================
 def mostrar_logo(ancho=280):
