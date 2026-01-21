@@ -1,4 +1,4 @@
-# main.py - CORREGIDO: TODO el UI dentro de @ui.page → soluciona RuntimeError
+# main.py - CORREGIDO: TODO UI DENTRO DE @ui.page → SOLUCIONA RuntimeError
 from nicegui import ui, app
 from core.auth import login, require_auth, logout
 from components.header import render_header
@@ -6,17 +6,17 @@ from pages.camareros import *
 from pages.clientes import *
 from pages.eventos import *
 
-# ===================== FUNCIÓN AUXILIAR (sin UI global) =====================
+# ===================== LOGO AUXILIAR (sin UI global) =====================
 def mostrar_logo(ancho=280):
     try:
         ui.image("assets/logo.png").style(f'width: {ancho}px; margin: auto;')
     except:
         ui.image("https://i.imgur.com/8e8Q8nB.png").style(f'width: {ancho}px; margin: auto;')
 
-# ===================== LOGIN (todo el UI aquí) =====================
+# ===================== LOGIN PAGE =====================
 @ui.page('/')
 def login_page():
-    print("[DEBUG LOGIN] Cargando página de login")
+    print("[DEBUG] Cargando página de login")
 
     ui.label('EventStaff Pro').classes('text-5xl text-center mt-16')
     ui.label('Panel de Coordinador').classes('text-2xl text-center text-gray-600 mt-4')
@@ -28,10 +28,10 @@ def login_page():
         def try_login():
             print("[DEBUG TRY_LOGIN] Inicio intento")
             print(f"Email: '{email.value}'")
-            print(f"Contraseña: '{password.value}' (longitud {len(password.value)})")
+            print(f"Contraseña: '{password.value}'")
 
             user = login(email.value, password.value)
-            print(f"Resultado login: {user}")
+            print(f"Resultado: {user}")
 
             if user:
                 app.storage.user['user'] = user
@@ -42,7 +42,7 @@ def login_page():
 
         ui.button('Entrar', on_click=try_login).props('flat color=primary').classes('w-full mt-6')
 
-# ===================== DASHBOARD (todo el UI aquí) =====================
+# ===================== DASHBOARD PAGE =====================
 @ui.page('/dashboard')
 def dashboard_page():
     print("[DEBUG DASHBOARD] Entrando...")
@@ -80,11 +80,11 @@ def dashboard_page():
         ui.separator()
         ui.button('Cerrar sesión', on_click=lambda: [app.storage.user.clear(), ui.navigate.to('/')]).props('flat color=negative').classes('w-full text-left')
 
-# ===================== EJECUCIÓN =====================
+# ===================== INICIO DE LA APP =====================
 ui.run(
     title="EventStaff Pro",
     favicon="https://i.imgur.com/8e8Q8nB.png",
     port=8080,
     reload=True,
-    storage_secret="mi_super_secreto_attenda_2026_oliver_xai_grok_987654"  # CAMBIA ESTO POR TU CLAVE REAL
+    storage_secret="mi_super_secreto_attenda_2026_oliver_xai_grok_987654"  # ¡CÁMBIALO POR TU CLAVE REAL!
 )
