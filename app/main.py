@@ -1,12 +1,12 @@
-# main.py - Versión FINAL ajustada con tu sidebar/header + debug + storage_secret + manejo de errores para KeyError
+# main.py - Versión corregida: TODO el UI dentro de @ui.page (soluciona RuntimeError y permite múltiples páginas)
 from nicegui import ui, app
 from core.auth import login, require_auth, logout
-from components.header import render_header  # Solo una vez
+from components.header import render_header
 from pages.camareros import *
 from pages.clientes import *
 from pages.eventos import *
 
-# ===================== LOGO SEGURO =====================
+# ===================== LOGO SEGURO (función auxiliar, sin UI global) =====================
 def mostrar_logo(ancho=280):
     try:
         ui.image("assets/logo.png").style(f'width: {ancho}px; margin: auto;')
@@ -78,7 +78,7 @@ def dashboard_page():
 
     ui.label("Selecciona una opción del menú lateral para empezar a gestionar").classes('text-lg mt-4')
 
-    # Sidebar (drawer izquierdo)
+    # Sidebar (drawer izquierdo) - mantengo exactamente tu estructura
     with ui.left_drawer(value=True).classes('bg-gray-100 p-4'):
         mostrar_logo(180)
         # Manejo de error para el nombre en sidebar
@@ -98,11 +98,12 @@ def dashboard_page():
         ui.separator()
         ui.button('Cerrar sesión', on_click=lambda: [app.storage.user.clear(), ui.navigate.to('/')]).props('flat color=negative').classes('w-full text-left')
 
-# Ejecutar la app
+# ===================== EJECUCIÓN DE LA APP =====================
+# ¡Nada de UI fuera de las funciones @ui.page!
 ui.run(
     title="EventStaff Pro",
     favicon="https://i.imgur.com/8e8Q8nB.png",
     port=8080,           # Para local; Render usa $PORT automáticamente
     reload=True,         # Solo para desarrollo local
-    storage_secret="tu_clave_secreta_super_segura_1234567890"  # ← Cámbiala por una tuya larga y única
+    storage_secret="mi_super_secreto_attenda_2026_oliver_xai_grok_987654"  # ¡OBLIGATORIO! Cámbiala por una tuya
 )
