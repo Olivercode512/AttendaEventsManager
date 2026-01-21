@@ -1,4 +1,4 @@
-# main.py - Versión FINAL ajustada con tu sidebar/header + debug + storage_secret
+# main.py - Versión FINAL ajustada con tu sidebar/header + debug + storage_secret + manejo de errores para KeyError
 from nicegui import ui, app
 from core.auth import login, require_auth, logout
 from components.header import render_header  # Solo una vez
@@ -48,7 +48,7 @@ def login_page():
 
         ui.button('Entrar', on_click=try_login).props('flat color=primary').classes('w-full mt-6')
 
-# ===================== DASHBOARD CON TU SIDEBAR Y HEADER =====================
+# ===================== DASHBOARD =====================
 @ui.page('/dashboard')
 def dashboard_page():
     print("\n" + "="*60)
@@ -62,13 +62,11 @@ def dashboard_page():
 
     print("[DEBUG DASHBOARD] require_auth → TRUE (acceso permitido)")
 
-    # Tu header (ya lo tienes)
     render_header(title="Dashboard")
 
-    # Mensaje de bienvenida
     ui.notify("Has iniciado sesión correctamente", type='positive')
 
-    # Mostrar nombre con manejo de error
+    # Mostrar nombre con manejo de error para evitar KeyError
     try:
         user_name = app.storage.user['user'].get('nombre', 'Coordinador')
         print(f"[DEBUG DASHBOARD] Nombre del usuario: {user_name}")
@@ -80,14 +78,15 @@ def dashboard_page():
 
     ui.label("Selecciona una opción del menú lateral para empezar a gestionar").classes('text-lg mt-4')
 
-    # Tu sidebar (ya lo tenías, lo mantengo igual)
+    # Sidebar (drawer izquierdo)
     with ui.left_drawer(value=True).classes('bg-gray-100 p-4'):
         mostrar_logo(180)
+        # Manejo de error para el nombre en sidebar
         try:
             user_name = app.storage.user['user'].get('nombre', 'Coordinador')
             ui.label(f"**{user_name}**").classes('text-lg font-bold')
-        except:
-            ui.label("**Usuario**").classes('text-lg font-bold')
+        except KeyError:
+            ui.label("**Coordinador**").classes('text-lg font-bold')
 
         ui.separator()
 
