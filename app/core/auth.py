@@ -1,5 +1,5 @@
 import streamlit as st
-from config.supabase import supabase
+from config.supabase_client import supabase
 
 def login(email: str, password: str):
     try:
