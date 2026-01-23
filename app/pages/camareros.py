@@ -1,181 +1,248 @@
-# pages/camareros.py - Adaptado a NiceGUI (con anidamiento de expansions permitido)
-from nicegui import ui, app
+# pages/camareros.py
+import streamlit as st
 import re
-from config.supabase_client import supabase
+from supabase import create_client
 from config.settings import Config
 import urllib.parse
-from core.auth import require_auth  # Importamos para autenticación
 
-@ui.page('/camareros')
-def camareros_page():
-    if not require_auth():
-        return
+supabase = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
 
-    ui.label("FICHA DE EMPLEADOS").classes('text-4xl mb-6')
+st.title("FICHA DE EMPLEADOS")
 
-    # ================== AÑADIR NUEVO CAMARERO ==================
-    with ui.expansion("Añadir nuevo camarero", value=True).classes('w-full mb-8'):
-        with ui.card().classes('w-full p-6 shadow-lg'):
-            with ui.row().classes('w-full'):
-                with ui.column():
-                    nombre = ui.input('Nombre').classes('w-full')
-                    apellidos = ui.input('Apellidos').classes('w-full')
-                    telefono = ui.input('Teléfono', placeholder="+34 609 159 167").classes('w-full')
-                    email = ui.input('Email').classes('w-full')
-                    dni = ui.input('DNI').classes('w-full')
+# ================== AÑADIR NUEVO CAMARERO ==================
+with st.expander("Añadir nuevo camarero", expanded=True):
+    with st.form("nuevo", clear_on_submit=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            nombre = st.text_input("Nombre")
+            apellidos = st.text_input("Apellidos", value="")
+            telefono = st.text_input("Teléfono", placeholder="+34 609 159 167")
+            email = st.text_input("Email")
+            dni = st.text_input("DNI")
+        with col2:
+            residencia = st.text_input("Lugar de residencia")
+            nacionalidad = st.text_input("Nacionalidad")
+            idiomas = st.text_input("Idiomas")
+            tiene_coche = st.checkbox("Tiene coche")
+            curso_prl = st.checkbox("Tiene curso PRL")
 
-                with ui.column():
-                    residencia = ui.input('Lugar de residencia').classes('w-full')
-                    nacionalidad = ui.input('Nacionalidad').classes('w-full')
-                    idiomas = ui.input('Idiomas').classes('w-full')
-                    tiene_coche = ui.checkbox('Tiene coche')
-                    curso_prl = ui.checkbox('Tiene curso PRL')
+        col3, col4 = st.columns(2)
+        with col3:
+            numero_ss = st.text_input("Nº Seguridad Social")
+            iban = st.text_input("IBAN")
+        with col4:
+            tarifa = st.number_input("Tarifa neta (€/hora)", min_value=8.0, value=12.0, step=0.5)
 
-            with ui.row().classes('w-full mt-4'):
-                with ui.column():
-                    numero_ss = ui.input('Nº Seguridad Social').classes('w-full')
-                    tarifa = ui.number('Tarifa €/hora', value=12.0, min=0.0, step=0.1).classes('w-full')
-                with ui.column():
-                    observaciones = ui.textarea('Observaciones').classes('w-full h-24')
+        if st.form_submit_button("Guardar camarero", type="primary"):
+            if not nombre.strip():
+                st.error("Nombre obligatorio")
+            else:
+                datos = {"nombre": nombre.strip(), "activo": True}
+                if apellidos.strip(): datos["apellidos"] = apellidos.strip()
+                if telefono.strip(): datos["telefono"] = telefono.strip()
+                if email.strip(): datos["email"] = email.strip()
+                if dni.strip(): datos["dni"] = dni.strip()
+                if residencia.strip(): datos["residencia"] = residencia.strip()
+                if nacionalidad.strip(): datos["nacionalidad"] = nacionalidad.strip()
+                if idiomas.strip(): datos["idiomas"] = idiomas.strip()
+                datos["tiene_coche"] = tiene_coche
+                datos["curso_prl"] = curso_prl
+                if numero_ss.strip(): datos["numero_ss"] = numero_ss.strip()
+                if iban.strip(): datos["iban"] = iban.strip()
+                datos["tarifa_neta"] = tarifa
 
-            def guardar_camarero():
-                if not nombre.value.strip():
-                    ui.notify('El nombre es obligatorio', type='negative')
-                    return
-                datos = {
-                    "nombre": nombre.value.strip(),
-                    "apellidos": apellidos.value.strip(),
-                    "telefono": telefono.value.strip(),
-                    "email": email.value.strip(),
-                    "dni": dni.value.strip(),
-                    "residencia": residencia.value.strip(),
-                    "nacionalidad": nacionalidad.value.strip(),
-                    "idiomas": idiomas.value.strip(),
-                    "tiene_coche": tiene_coche.value,
-                    "curso_prl": curso_prl.value,
-                    "numero_ss": numero_ss.value.strip(),
-                    "tarifa": tarifa.value,
-                    "observaciones": observaciones.value.strip() if observaciones.value.strip() else None
-                }
                 supabase.table("camareros").insert(datos).execute()
-                ui.notify('¡Camarero añadido!', type='positive')
-                ui.refresh()
+                st.success(f"¡{nombre} añadido!")
+                st.balloons()
 
-            ui.button('Guardar camarero', on_click=guardar_camarero).props('color=primary').classes('w-full mt-6')
+# ================== BUSCADOR EN TIEMPO REAL ==================
+st.markdown("### Buscar camarero")
+busqueda = st.text_input(
+    "",
+    placeholder="Escribe nombre o apellidos...",
+    key="buscador_camareros"
+)
 
-# ================== LISTA DE CAMAREROS ==================
-camareros = supabase.table("camareros").select("*").execute().data
+# Cargar todos los camareros
+camareros = supabase.table("camareros").select("*").order("nombre").execute().data
 
-if camareros:
-    for c in camareros:
-        with ui.expansion(f"{c['nombre']} {c['apellidos']} - Tel: {c['telefono']}").classes('w-full mb-4'):
-            with ui.row().classes('w-full'):
-                with ui.column():
-                    ui.label(f"Email: {c.get('email', 'No disponible')}")
-                    ui.label(f"DNI: {c.get('dni', 'No disponible')}")
-                    ui.label(f"Residencia: {c.get('residencia', 'No disponible')} ")
-                    ui.label(f"Nacionalidad: {c.get('nacionalidad', 'No disponible')} ")
-                    ui.label(f"Idiomas: {c.get('idiomas', 'No disponible')} ")
+# Filtrar según búsqueda
+camareros_mostrar = camareros
+if busqueda.strip():
+    termino = busqueda.strip().lower()
+    camareros_mostrar = [
+        c for c in camareros
+        if termino in (c.get("nombre") or "").lower() or
+           termino in (c.get("apellidos") or "").lower()
+    ]
 
-                with ui.column():
-                    ui.label(f"Tiene coche: {'Sí' if c.get('tiene_coche') else 'No'}")
-                    ui.label(f"Curso PRL: {'Sí' if c.get('curso_prl') else 'No'}")
-                    ui.label(f"Nº SS: {c.get('numero_ss', 'No disponible')} ")
-                    ui.label(f"Tarifa: {c.get('tarifa', 12.0)} €/h")
-                    ui.label(f"Observaciones: {c.get('observaciones') or 'Ninguna'}")
+st.markdown(f"**Mostrando {len(camareros_mostrar)} de {len(camareros)} camareros**")
 
-            # Editar camarero (adaptado a form con button)
-            ui.label('Editar camarero').classes('text-xl mt-6 mb-4')
-            with ui.card().classes('w-full p-4 shadow-md'):
-                with ui.row().classes('w-full'):
-                    with ui.column():
-                        edit_nombre = ui.input('Nombre', value=c.get('nombre', '')).classes('w-full')
-                        edit_apellidos = ui.input('Apellidos', value=c.get('apellidos', '')).classes('w-full')
-                        edit_telefono = ui.input('Teléfono', value=c.get('telefono', '')).classes('w-full')
-                        edit_email = ui.input('Email', value=c.get('email', '')).classes('w-full')
-                        edit_dni = ui.input('DNI', value=c.get('dni', '')).classes('w-full')
+# ================== LISTA DE CAMAREROS CON TODO ==================
+for c in camareros_mostrar:
+    nombre_completo = f"{c.get('nombre', '')} {c.get('apellidos', '')}".strip()
+    tel = c.get("telefono") or "Sin teléfono"
 
-                    with ui.column():
-                        edit_residencia = ui.input('Residencia', value=c.get('residencia', '')).classes('w-full')
-                        edit_nacionalidad = ui.input('Nacionalidad', value=c.get('nacionalidad', '')).classes('w-full')
-                        edit_idiomas = ui.input('Idiomas', value=c.get('idiomas', '')).classes('w-full')
-                        edit_coche = ui.checkbox('Tiene coche', value=c.get('tiene_coche', False))
-                        edit_prl = ui.checkbox('Curso PRL', value=c.get('curso_prl', False))
+    # === MEDIA DE VALORACIÓN CON ESTRELLITAS ===
+    feedback = supabase.table("feedback_camareros")\
+        .select("valoracion")\
+        .eq("camarero_id", c['id'])\
+        .execute().data
 
-                with ui.row().classes('w-full mt-4'):
-                    with ui.column():
-                        edit_ss = ui.input('Nº SS', value=c.get('numero_ss', '')).classes('w-full')
-                        edit_tarifa = ui.number('Tarifa €/h', value=c.get('tarifa', 12.0), step=0.1, min=0.0).classes('w-full')
-                    with ui.column():
-                        edit_obs = ui.textarea('Observaciones', value=c.get('observaciones', '')).classes('w-full h-24')
+    if feedback:
+        media = sum(f["valoracion"] for f in feedback) / len(feedback)
+        media_redondeada = round(media, 1)
+        estrellas_llenas = "⭐" * int(media_redondeada)
+        media_texto = f" – **{media_redondeada}/5** {estrellas_llenas} ({len(feedback)} valoraciones)"
+    else:
+        media_texto = " – Sin valoraciones"
 
-                with ui.row().classes('w-full mt-6'):
-                    def guardar_cambios():
-                        datos_edit = {
-                            "nombre": edit_nombre.value.strip(),
-                            "apellidos": edit_apellidos.value.strip(),
-                            "telefono": edit_telefono.value.strip(),
-                            "email": edit_email.value.strip(),
-                            "dni": edit_dni.value.strip(),
-                            "residencia": edit_residencia.value.strip(),
-                            "nacionalidad": edit_nacionalidad.value.strip(),
-                            "idiomas": edit_idiomas.value.strip(),
-                            "tiene_coche": edit_coche.value,
-                            "curso_prl": edit_prl.value,
-                            "numero_ss": edit_ss.value.strip(),
-                            "tarifa": edit_tarifa.value,
-                            "observaciones": edit_obs.value.strip() if edit_obs.value.strip() else None
-                        }
-                        supabase.table("camareros").update(datos_edit).eq("id", c['id']).execute()
-                        ui.notify('Camarero actualizado', type='positive')
-                        ui.refresh()
+    with st.expander(f"**{nombre_completo}** – {tel}{media_texto}"):
+        col1, col2, col3 = st.columns([5, 2, 2])  # Espacio amplio
 
-                    ui.button('Guardar cambios', on_click=guardar_cambios).props('color=primary').classes('flex-1')
+        # ================== EDICIÓN ==================
+        with col1:
+            with st.form(key=f"edit_{c['id']}"):
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    nuevo_nombre = st.text_input("Nombre", value=c.get('nombre', ''), key=f"n_{c['id']}")
+                    nuevo_apellidos = st.text_input("Apellidos", value=c.get('apellidos', ''), key=f"a_{c['id']}")
+                    nuevo_telefono = st.text_input("Teléfono", value=c.get('telefono', ''), key=f"t_{c['id']}")
+                    nuevo_email = st.text_input("Email", value=c.get('email', ''), key=f"e_{c['id']}")
+                    nuevo_dni = st.text_input("DNI", value=c.get('dni', ''), key=f"d_{c['id']}")
+                with col_b:
+                    nuevo_residencia = st.text_input("Residencia", value=c.get('residencia', ''), key=f"r_{c['id']}")
+                    nuevo_nacionalidad = st.text_input("Nacionalidad", value=c.get('nacionalidad', ''), key=f"na_{c['id']}")
+                    nuevo_idiomas = st.text_input("Idiomas", value=c.get('idiomas', ''), key=f"i_{c['id']}")
+                    nuevo_coche = st.checkbox("Tiene coche", value=c.get('tiene_coche', False), key=f"coche_{c['id']}")
+                    nuevo_prl = st.checkbox("Curso PRL", value=c.get('curso_prl', False), key=f"prl_{c['id']}")
 
-                    def confirmar_eliminar():
-                        app.storage.user['camarero_a_eliminar'] = c['id']
-                        app.storage.user['nombre_a_eliminar'] = f"{c['nombre']} {c['apellidos']}"
-                        ui.refresh()
+                col_c, col_d = st.columns(2)
+                with col_c:
+                    nuevo_ss = st.text_input("Nº SS", value=c.get('numero_ss', ''), key=f"ss_{c['id']}")
+                    nuevo_iban = st.text_input("IBAN", value=c.get('iban', ''), key=f"iban_{c['id']}")
+                with col_d:
+                    nuevo_tarifa = st.number_input("Tarifa neta", min_value=8.0, value=float(c.get('tarifa_neta', 12.0)), step=0.5, key=f"tarifa_{c['id']}")
 
-                    ui.button('Eliminar', on_click=confirmar_eliminar).props('color=negative').classes('flex-1')
+                if st.form_submit_button("Guardar cambios", type="secondary"):
+                    datos = {"nombre": nuevo_nombre.strip()}
+                    if nuevo_apellidos.strip(): datos["apellidos"] = nuevo_apellidos.strip()
+                    if nuevo_telefono.strip(): datos["telefono"] = nuevo_telefono.strip()
+                    if nuevo_email.strip(): datos["email"] = nuevo_email.strip()
+                    if nuevo_dni.strip(): datos["dni"] = nuevo_dni.strip()
+                    if nuevo_residencia.strip(): datos["residencia"] = nuevo_residencia.strip()
+                    if nuevo_nacionalidad.strip(): datos["nacionalidad"] = nuevo_nacionalidad.strip()
+                    if nuevo_idiomas.strip(): datos["idiomas"] = nuevo_idiomas.strip()
+                    datos["tiene_coche"] = nuevo_coche
+                    datos["curso_prl"] = nuevo_prl
+                    if nuevo_ss.strip(): datos["numero_ss"] = nuevo_ss.strip()
+                    if nuevo_iban.strip(): datos["iban"] = nuevo_iban.strip()
+                    datos["tarifa_neta"] = nuevo_tarifa
 
-            # Añadir valoración (anidada dentro del expander, NiceGUI lo permite)
-            with ui.expansion('Añadir valoración', value=False).classes('w-full mt-4'):
-                valoracion = ui.number('Valoración (0-5)', value=0, min=0, max=5, step=1).classes('w-full')
-                comentario = ui.textarea('Comentario').classes('w-full h-24')
-                evento_id = ui.number('ID del evento', value=0, min=0).classes('w-full')
+                    supabase.table("camareros").update(datos).eq("id", c['id']).execute()
+                    st.success("¡Datos actualizados!")
+                    st.rerun()
 
-                def guardar_valoracion():
-                    datos_val = {
-                        "camarero_id": c['id'],
-                        "evento_id": evento_id.value,
-                        "valoracion": valoracion.value,
-                        "comentario": comentario.value.strip() if comentario.value.strip() else None
-                    }
-                    supabase.table("valoraciones").insert(datos_val).execute()
-                    ui.notify('¡Valoración guardada!', type='positive')
-                    ui.refresh()
+        # ================== COMUNICACIÓN ==================
+        with col2:
+            if c.get('telefono'):
+                tel_clean = c['telefono'].lstrip('+').replace(' ', '')
+                st.link_button("Llamar", f"tel:{c['telefono']}", use_container_width=True)
+                st.link_button("WhatsApp", f"https://wa.me/{tel_clean}", use_container_width=True)
 
-                ui.button('Guardar valoración', on_click=guardar_valoracion).props('color=primary').classes('w-full mt-4')
+            if c.get('email') and c['email'].strip():
+                email = c['email'].strip()
+                asunto = urllib.parse.quote("Attenda Events – Información importante")
+                cuerpo = urllib.parse.quote(
+                    f"Hola {c.get('nombre', '')},\n\n"
+                    "Te escribimos desde Attenda Events.\n\n"
+                    "Aquí tienes información importante sobre próximos eventos o detalles importantes:\n\n"
+                    "¡Gracias!\n"
+                    "El equipo de Attenda Events"
+                )
+                enlace_email = f"https://mail.google.com/mail/?view=cm&fs=1&to={email}&su={asunto}&body={cuerpo}"
+                st.link_button("Enviar email", enlace_email, use_container_width=True)
+            else:
+                st.write("Sin email")
+
+            activo = st.toggle("Disponible", value=c.get('activo', True), key=f"act_{c['id']}")
+            if activo != c.get('activo', True):
+                supabase.table("camareros").update({"activo": activo}).eq("id", c['id']).execute()
+                st.rerun()
+
+        # ================== ACCIONES ==================
+        with col3:
+            if st.button("Asignar a evento", key=f"asignar_{c['id']}", use_container_width=True):
+                if not c.get('activo'):
+                    st.toast("Camarero no disponible")
+                else:
+                    st.session_state.camarero_para_asignar = c['id']
+                    st.switch_page("pages/eventos.py")
+
+            if st.button("Eliminar camarero", key=f"eliminar_{c['id']}", type="secondary", use_container_width=True):
+                st.session_state.camarero_a_eliminar = c['id']
+                st.session_state.nombre_a_eliminar = nombre_completo
+                st.rerun()
+
+        # ================== FEEDBACK CON ESTRELLITAS ==================
+        st.markdown("### Feedback de eventos")
+        feedback_res = supabase.table("feedback_camareros")\
+            .select("*, eventos!inner(cliente, fecha)")\
+            .eq("camarero_id", c['id'])\
+            .order("fecha", desc=True)\
+            .execute().data
+
+        if feedback_res:
+            for f in feedback_res:
+                estrellas = "⭐" * f["valoracion"] + "☆" * (5 - f["valoracion"])
+                with st.container():
+                    st.write(f"**{f['eventos']['cliente']}** – {f['eventos']['fecha']}")
+                    st.write(f"{estrellas} ({f['valoracion']}/5)")
+                    if f["comentario"]:
+                        st.caption(f"_{f['comentario']}_")
+                    st.markdown("---")
+        else:
+            st.info("Aún no tiene feedback")
+
+        # Añadir nuevo feedback
+        with st.expander("Añadir valoración", expanded=False):
+            with st.form(key=f"fb_form_{c['id']}"):
+                eventos_res = supabase.table("eventos").select("id, cliente, fecha").execute().data
+                opciones = {f"{e['cliente']} – {e['fecha']}": e['id'] for e in eventos_res}
+                evento_nombre = st.selectbox("Evento", [""] + list(opciones.keys()), key=f"fb_evento_{c['id']}")
+                valoracion = st.slider("Valoración", 1, 5, 3, key=f"fb_stars_{c['id']}")
+                comentario = st.text_area("Comentario (opcional)", key=f"fb_com_{c['id']}", height=100)
+
+                if st.form_submit_button("Guardar valoración", type="primary"):
+                    if not evento_nombre:
+                        st.error("Selecciona un evento")
+                    else:
+                        evento_id = opciones[evento_nombre]
+                        supabase.table("feedback_camareros").insert({
+                            "camarero_id": c['id'],
+                            "evento_id": evento_id,
+                            "valoracion": valoracion,
+                            "comentario": comentario.strip() if comentario.strip() else None
+                        }).execute()
+                        st.success("¡Valoración guardada!")
+                        st.balloons()
+                        st.rerun()
 
 # ================== CONFIRMACIÓN ELIMINAR ==================
-if app.storage.user.get('camarero_a_eliminar'):
-    c_id = app.storage.user['camarero_a_eliminar']
-    nombre = app.storage.user['nombre_a_eliminar']
-    ui.notify(f"¿Eliminar permanentemente a **{nombre}**?", type='negative')
-    with ui.row().classes('w-full mt-4'):
-        def eliminar():
+if st.session_state.get("camarero_a_eliminar"):
+    c_id = st.session_state.camarero_a_eliminar
+    nombre = st.session_state.nombre_a_eliminar
+    st.error(f"¿Eliminar permanentemente a **{nombre}**?")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Sí, eliminar", type="primary"):
             supabase.table("camareros").delete().eq("id", c_id).execute()
-            app.storage.user.pop('camarero_a_eliminar', None)
-            app.storage.user.pop('nombre_a_eliminar', None)
-            ui.notify('Camarero eliminado', type='positive')
-            ui.refresh()
-
-        ui.button('Sí, eliminar', on_click=eliminar).props('color=primary').classes('flex-1')
-
-        def cancelar():
-            app.storage.user.pop('camarero_a_eliminar', None)
-            app.storage.user.pop('nombre_a_eliminar', None)
-            ui.refresh()
-
-        ui.button('Cancelar', on_click=cancelar).props('color=secondary').classes('flex-1')
+            del st.session_state.camarero_a_eliminar
+            del st.session_state.nombre_a_eliminar
+            st.success("Camarero eliminado")
+            st.rerun()
+    with col2:
+        if st.button("Cancelar"):
+            del st.session_state.camarero_a_eliminar
+            del st.session_state.nombre_a_eliminar
+            st.rerun()
