@@ -1,4 +1,4 @@
-# pages/camareros.py - Versión profesional y completa para Streamlit
+# pages/camareros.py - Versión profesional y completa para Streamlit (corregida y pulida)
 import streamlit as st
 import re
 from config.supabase_client import supabase
@@ -9,7 +9,14 @@ if not require_auth():
     st.stop()
 
 st.title("Ficha de Empleados")
-st.markdown("Gestión completa de camareros: añadir, editar, eliminar y valorar.")
+st.markdown("Gestión completa de camareros: añadir, editar, eliminar y valorar. Usa el buscador para filtrar.")
+
+# ================== BUSCADOR Y FILTROS ==================
+search_query = st.text_input("Buscar por nombre o email", placeholder="Escribe para filtrar...")
+camareros = supabase.table("camareros").select("*").execute().data
+
+if search_query:
+    camareros = [cam for cam in camareros if search_query.lower() in cam['nombre'].lower() or search_query.lower() in cam['email'].lower()]
 
 # ================== FORMULARIO AÑADIR NUEVO CAMARERO ==================
 with st.expander("Añadir nuevo camarero", expanded=True):
@@ -63,12 +70,15 @@ with st.expander("Añadir nuevo camarero", expanded=True):
                 st.error(f"Error al guardar: {str(e)}")
 
 # ================== LISTADO DE CAMAREROS ==================
-camareros = supabase.table("camareros").select("*").execute().data
-
 if not camareros:
-    st.info("No hay camareros registrados todavía.")
+    st.info("No hay camareros registrados todavía. Añade uno arriba.")
 else:
-    st.subheader(f"{len(camareros)} camareros registrados")
+    st.subheader(f"{len(camareros)} camareros encontrados")
+    # Botón exportar (profesional: descarga CSV)
+    if st.button("Exportar a CSV", type="secondary"):
+        import pandas as pd
+        df = pd.DataFrame(camareros)
+        st.download_button("Descargar CSV", df.to_csv(index=False), file_name="camareros.csv", mime="text/csv")
 
     for cam in camareros:
         with st.expander(f"{cam['nombre']} - {cam['tarifa_hora']} €/h"):
@@ -90,7 +100,7 @@ else:
 
             with col_acciones:
                 # Botón eliminar con confirmación
-                if st.button("Eliminar", key=f"del_{cam['id']}", type="primary", use_container_width=True):
+                if st.button("Eliminar", key=f"del_{cam['id']}", type="secondary", use_container_width=True):
                     st.session_state[f"confirm_delete_{cam['id']}"] = True
                     st.rerun()
 
@@ -123,6 +133,7 @@ else:
         if st.session_state.get('editing_id') == cam['id']:
             st.subheader(f"Editando: {cam['nombre']}")
             with st.form(key=f"edit_form_{cam['id']}"):
+                st.subheader("Datos personales")
                 col1, col2 = st.columns(2)
                 with col1:
                     edit_nombre = st.text_input("Nombre completo", value=cam['nombre'])
@@ -136,28 +147,38 @@ else:
                 st.subheader("Actualizar valoración")
                 tab_p, tab_c = st.tabs(["Puntuación", "Comentario"])
                 with tab_p:
-                    edit_puntuacion = st.slider("Nueva puntuación", 1, 5, cam.get('puntuacion', 3))
+                    edit_puntuacion = st.slider("Nueva puntuación", 1, 5, cam.get('puntuacion', 3), step=1)
                 with tab_c:
-                    edit_comentario = st.text_area("Nuevo comentario", value=cam.get('comentario', ''))
+                    edit_comentario = st.text_area("Nuevo comentario", value=cam.get('comentario', ''), height=100)
 
                 col_btn1, col_btn2 = st.columns(2)
                 with col_btn1:
                     if st.form_submit_button("Guardar cambios", type="primary"):
-                        update_data = {
-                            "nombre": edit_nombre,
-                            "telefono": edit_telefono,
-                            "email": edit_email,
-                            "tarifa_hora": edit_tarifa,
-                            "iban": edit_iban or None,
-                            "nif": edit_nif or None,
-                            "puntuacion": edit_puntuacion,
-                            "comentario": edit_comentario or None
-                        }
-                        supabase.table("camareros").update(update_data).eq("id", cam['id']).execute()
-                        st.success("Cambios guardados")
-                        del st.session_state['editing_id']
-                        del st.session_state['edit_data']
-                        st.rerun()
+                        errors = []
+                        if not edit_nombre: errors.append("El nombre es obligatorio")
+                        if not edit_telefono or not re.match(r'^\d{9}$', edit_telefono): errors.append("Teléfono: exactamente 9 dígitos")
+                        if not edit_email or not re.match(r'^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$', edit_email.upper()): errors.append("Email inválido")
+                        if edit_tarifa <= 0: errors.append("Tarifa debe ser mayor que 0")
+
+                        if errors:
+                            for err in errors:
+                                st.error(err)
+                        else:
+                            update_data = {
+                                "nombre": edit_nombre.strip(),
+                                "telefono": edit_telefono.strip(),
+                                "email": edit_email.strip().lower(),
+                                "tarifa_hora": edit_tarifa,
+                                "iban": edit_iban.strip().upper() if edit_iban else None,
+                                "nif": edit_nif.strip().upper() if edit_nif else None,
+                                "puntuacion": edit_puntuacion,
+                                "comentario": edit_comentario.strip() if edit_comentario else None
+                            }
+                            supabase.table("camareros").update(update_data).eq("id", cam['id']).execute()
+                            st.success("Cambios guardados correctamente")
+                            del st.session_state['editing_id']
+                            del st.session_state['edit_data']
+                            st.rerun()
                 with col_btn2:
                     if st.form_submit_button("Cancelar"):
                         del st.session_state['editing_id']
